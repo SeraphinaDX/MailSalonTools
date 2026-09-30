@@ -37,6 +37,13 @@ func TestEMLPSTRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	parsedInput, err := model.ParseRFC822(raw)
+	if err != nil {
+		t.Fatalf("parse generated EML: %v", err)
+	}
+	if parsedInput.HTMLBody != wantHTML {
+		t.Fatalf("generated EML HTML length = %d, want %d", len(parsedInput.HTMLBody), len(wantHTML))
+	}
 	if err := os.WriteFile(input, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
