@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/SeraphinaDX/MailSalonTools/internal/mailbox"
@@ -16,18 +17,26 @@ func TestEMLPSTRoundTrip(t *testing.T) {
 	pstPath := filepath.Join(temp, "archive.pst")
 	outputDir := filepath.Join(temp, "exported")
 
-	raw := []byte("From: Britney <britney@example.com>\r\n" +
-		"To: Friend <friend@example.com>\r\n" +
-		"Subject: MailSalonTools PST round trip\r\n" +
-		"Message-ID: <mailsalontools-test@example.com>\r\n" +
-		"MIME-Version: 1.0\r\n" +
-		"Content-Type: multipart/mixed; boundary=x\r\n\r\n" +
-		"--x\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nhello from MailSalonTools\r\n" +
-		"--x\r\nContent-Type: application/octet-stream; name=hello.bin\r\n" +
-		"Content-Disposition: attachment; filename=hello.bin\r\n" +
-		"Content-Transfer-Encoding: base64\r\n\r\nAAECAwQF\r\n" +
-		"--x--\r\n")
+	wantHTML := "<html><body><p>" + strings.Repeat("large HTML body from MailSalonTools ", 2000) + "</p></body></html>"
+	wantAttachment := bytes.Repeat([]byte{0, 1, 2, 3, 4, 5, 6, 7}, 8192)
 
+	raw, err := model.BuildRFC822(&model.Message{
+		Subject: "MailSalonTools PST round trip",
+		MessageID: "<mailsalontools-test@example.com>",
+		From: model.Address{Name: "Britney", Email: "britney@example.com"},
+		To: []model.Address{{Name: "Friend", Email: "friend@example.com"}},
+		TextBody: "hello from MailSalonTools",
+		HTMLBody: wantHTML,
+		Attachments: []model.Attachment{{
+			Filename: "hello.bin",
+			MIMEType: "application/octet-stream",
+			Data: wantAttachment,
+		}},
+		Parsed: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(input, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -70,13 +79,16 @@ func TestEMLPSTRoundTrip(t *testing.T) {
 	if got.Subject != "MailSalonTools PST round trip" {
 		t.Fatalf("subject = %q", got.Subject)
 	}
+	if got.HTMLBody != wantHTML {
+		t.Fatalf("HTML length = %d, want %d", len(got.HTMLBody), len(wantHTML))
+	}
 	if len(got.Attachments) != 1 {
 		t.Fatalf("attachments = %d", len(got.Attachments))
 	}
 	if got.Attachments[0].Filename != "hello.bin" {
 		t.Fatalf("attachment filename = %q", got.Attachments[0].Filename)
 	}
-	if !bytes.Equal(got.Attachments[0].Data, []byte{0, 1, 2, 3, 4, 5}) {
-		t.Fatalf("attachment data = %v", got.Attachments[0].Data)
+	if !bytes.Equal(got.Attachments[0].Data, wantAttachment) {
+		t.Fatalf("attachment length = %d, want %d", len(got.Attachments[0].Data), len(wantAttachment))
 	}
 }
