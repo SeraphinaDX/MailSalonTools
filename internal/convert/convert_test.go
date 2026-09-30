@@ -21,16 +21,16 @@ func TestEMLPSTRoundTrip(t *testing.T) {
 	wantAttachment := bytes.Repeat([]byte{0, 1, 2, 3, 4, 5, 6, 7}, 8192)
 
 	raw, err := model.BuildRFC822(&model.Message{
-		Subject: "MailSalonTools PST round trip",
+		Subject:   "MailSalonTools PST round trip",
 		MessageID: "<mailsalontools-test@example.com>",
-		From: model.Address{Name: "Britney", Email: "britney@example.com"},
-		To: []model.Address{{Name: "Friend", Email: "friend@example.com"}},
-		TextBody: "hello from MailSalonTools",
-		HTMLBody: wantHTML,
+		From:      model.Address{Name: "Britney", Email: "britney@example.com"},
+		To:        []model.Address{{Name: "Friend", Email: "friend@example.com"}},
+		TextBody:  "hello from MailSalonTools",
+		HTMLBody:  wantHTML,
 		Attachments: []model.Attachment{{
 			Filename: "hello.bin",
 			MIMEType: "application/octet-stream",
-			Data: wantAttachment,
+			Data:     wantAttachment,
 		}},
 		Parsed: true,
 	})
