@@ -21,6 +21,7 @@ jobs:
       - name: Format branch
         if: github.event_name == 'push'
         run: |
+          go mod tidy
           gofmt -w .
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
