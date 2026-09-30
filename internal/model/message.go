@@ -129,23 +129,23 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 			mediaType = "application/octet-stream"
 		}
 		out.Attachments = append(out.Attachments, Attachment{
-			Filename: filename, MIMEType: mediaType,
-			ContentID: strings.Trim(h.Get("Content-ID"), "<>"), Data: body,
+			Filename:  filename,
+			MIMEType:  mediaType,
+			ContentID: strings.Trim(h.Get("Content-ID"), "<>"),
+			Data:      body,
 		})
 		return nil
 	}
 	switch strings.ToLower(mediaType) {
 	case "text/html":
 		if out.HTMLBody != "" {
-			out.HTMLBody += "
-"
+			out.HTMLBody += "\n"
 		}
 		out.HTMLBody += string(body)
 	default:
 		if strings.HasPrefix(strings.ToLower(mediaType), "text/") {
 			if out.TextBody != "" {
-				out.TextBody += "
-"
+				out.TextBody += "\n"
 			}
 			out.TextBody += string(body)
 		}
@@ -168,8 +168,7 @@ func BuildRFC822(m *Message) ([]byte, error) {
 	var out bytes.Buffer
 	writeHeader := func(name, value string) {
 		if strings.TrimSpace(value) != "" {
-			fmt.Fprintf(&out, "%s: %s
-", name, value)
+			fmt.Fprintf(&out, "%s: %s\r\n", name, value)
 		}
 	}
 	writeHeader("From", formatAddress(m.From))
@@ -186,8 +185,7 @@ func BuildRFC822(m *Message) ([]byte, error) {
 	if len(m.Attachments) == 0 && m.HTMLBody == "" {
 		writeHeader("Content-Type", "text/plain; charset=utf-8")
 		writeHeader("Content-Transfer-Encoding", "quoted-printable")
-		out.WriteString("
-")
+		out.WriteString("\r\n")
 		qp := quotedprintable.NewWriter(&out)
 		_, _ = io.WriteString(qp, m.TextBody)
 		_ = qp.Close()
@@ -200,8 +198,7 @@ func BuildRFC822(m *Message) ([]byte, error) {
 			return nil, err
 		}
 		writeHeader("Content-Type", contentType)
-		out.WriteString("
-")
+		out.WriteString("\r\n")
 		out.Write(body)
 		return out.Bytes(), nil
 	}
@@ -209,8 +206,8 @@ func BuildRFC822(m *Message) ([]byte, error) {
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	writeHeader("Content-Type", mime.FormatMediaType("multipart/mixed", map[string]string{"boundary": mw.Boundary()}))
-	out.WriteString("
-")
+	out.WriteString("\r\n")
+
 	if m.TextBody != "" || m.HTMLBody != "" {
 		var contentType string
 		var payload []byte
@@ -232,6 +229,7 @@ func BuildRFC822(m *Message) ([]byte, error) {
 		part, _ := mw.CreatePart(h)
 		_, _ = part.Write(payload)
 	}
+
 	for _, a := range m.Attachments {
 		ct := a.MIMEType
 		if ct == "" {
@@ -286,13 +284,11 @@ func quotedPrintableBytes(s string) []byte {
 func writeBase64(w io.Writer, data []byte) {
 	encoded := base64.StdEncoding.EncodeToString(data)
 	for len(encoded) > 76 {
-		_, _ = io.WriteString(w, encoded[:76]+"
-")
+		_, _ = io.WriteString(w, encoded[:76]+"\r\n")
 		encoded = encoded[76:]
 	}
 	if encoded != "" {
-		_, _ = io.WriteString(w, encoded+"
-")
+		_, _ = io.WriteString(w, encoded+"\r\n")
 	}
 }
 
