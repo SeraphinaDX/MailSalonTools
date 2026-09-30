@@ -13,10 +13,10 @@ import (
 type Format string
 
 const (
-	FormatEML Format = "eml"
+	FormatEML     Format = "eml"
 	FormatMaildir Format = "maildir"
-	FormatMbox Format = "mbox"
-	FormatPST Format = "pst"
+	FormatMbox    Format = "mbox"
+	FormatPST     Format = "pst"
 )
 
 type Reader interface {

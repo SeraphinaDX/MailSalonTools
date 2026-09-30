@@ -8,12 +8,12 @@ import (
 )
 
 type Options struct {
-	Input string
-	Output string
-	InputFormat mailbox.Format
+	Input        string
+	Output       string
+	InputFormat  mailbox.Format
 	OutputFormat mailbox.Format
-	Overwrite bool
-	Progress func(int)
+	Overwrite    bool
+	Progress     func(int)
 }
 
 type Result struct{ Messages int }

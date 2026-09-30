@@ -11,7 +11,7 @@ import (
 )
 
 type emlReader struct {
-	root string
+	root  string
 	files []string
 	index int
 }
@@ -56,9 +56,9 @@ func (r *emlReader) Next() (*model.Message, error) {
 func (r *emlReader) Close() error { return nil }
 
 type emlWriter struct {
-	path string
+	path     string
 	fileMode bool
-	count int
+	count    int
 }
 
 func newEMLWriter(path string, overwrite bool) (*emlWriter, error) {

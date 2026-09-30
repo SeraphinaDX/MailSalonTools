@@ -13,7 +13,7 @@ import (
 )
 
 type maildirReader struct {
-	root string
+	root  string
 	files []string
 	index int
 }
@@ -62,7 +62,7 @@ func (r *maildirReader) Next() (*model.Message, error) {
 func (r *maildirReader) Close() error { return nil }
 
 type maildirWriter struct {
-	root string
+	root    string
 	counter uint64
 }
 
