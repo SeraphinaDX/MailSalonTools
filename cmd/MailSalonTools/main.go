@@ -24,6 +24,7 @@ func main() {
 		run(convert.Options{Input: selection.Input, Output: selection.Output})
 		return
 	}
+
 	fs := flag.NewFlagSet("MailSalonTools", flag.ExitOnError)
 	input := fs.String("input", "", "input mailbox path")
 	output := fs.String("output", "", "output mailbox path")
@@ -32,34 +33,44 @@ func main() {
 	overwrite := fs.Bool("overwrite", false, "replace an existing output")
 	showVersion := fs.Bool("version", false, "show version and exit")
 	_ = fs.Parse(os.Args[1:])
+
 	if *showVersion {
-		fmt.Printf("MailSalonTools %s
-", version.Version)
+		fmt.Printf("MailSalonTools %s\n", version.Version)
 		return
 	}
+
 	opts := convert.Options{Input: *input, Output: *output, Overwrite: *overwrite}
 	var err error
 	if strings.TrimSpace(*inputFormat) != "" {
 		opts.InputFormat, err = mailbox.ParseFormat(*inputFormat)
-		if err != nil { fatal(err) }
+		if err != nil {
+			fatal(err)
+		}
 	}
 	if strings.TrimSpace(*outputFormat) != "" {
 		opts.OutputFormat, err = mailbox.ParseFormat(*outputFormat)
-		if err != nil { fatal(err) }
+		if err != nil {
+			fatal(err)
+		}
 	}
 	run(opts)
 }
 
 func run(opts convert.Options) {
-	opts.Progress = func(n int) { fmt.Printf("✉ Converted %d message(s)...", n) }
+	opts.Progress = func(n int) {
+		fmt.Printf("\r✉ Converted %d message(s)...", n)
+	}
 	result, err := convert.Run(opts)
 	if err != nil {
-		if result.Messages > 0 { fmt.Println() }
+		if result.Messages > 0 {
+			fmt.Println()
+		}
 		fatal(err)
 	}
-	if result.Messages > 0 { fmt.Println() }
-	fmt.Printf("✓ Finished: %d message(s) converted.
-", result.Messages)
+	if result.Messages > 0 {
+		fmt.Println()
+	}
+	fmt.Printf("✓ Finished: %d message(s) converted.\n", result.Messages)
 }
 
 func fatal(err error) {
