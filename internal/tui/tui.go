@@ -11,7 +11,7 @@ import (
 )
 
 type Selection struct {
-	Input string
+	Input  string
 	Output string
 }
 
@@ -25,41 +25,53 @@ func Run() (Selection, error) {
 	input.Title = " Input "
 	input.Placeholder = "/path/to/mailbox"
 	input.BorderStyle.Fg = ui.ColorMagenta
+
 	output := widgets.NewInput()
 	output.Title = " Output "
 	output.Placeholder = "/path/to/output.pst"
 	output.BorderStyle.Fg = ui.ColorMagenta
+
 	info := widgets.NewParagraph()
 	info.Title = " MailSalonTools "
-	info.Text = "Mailbox conversion, minus the drama.
-
-Tab: switch field   Enter: convert   Esc/q: quit"
+	info.Text = "Mailbox conversion, minus the drama.\n\nTab: switch field   Enter: convert   Esc/q: quit"
 	info.BorderStyle.Fg = ui.ColorMagenta
 	info.TitleStyle.Fg = ui.ColorMagenta
+
 	status := widgets.NewParagraph()
 	status.Title = " Formats "
 	status.BorderStyle.Fg = ui.ColorCyan
 
 	focus := 0
 	events := ui.PollEvents()
+
 	redraw := func() {
 		width, height := ui.TerminalDimensions()
-		if width < 50 { width = 50 }
-		if height < 16 { height = 16 }
+		if width < 50 {
+			width = 50
+		}
+		if height < 16 {
+			height = 16
+		}
 		left, right := width/2-24, width/2+24
 		info.SetRect(left, 1, right, 7)
 		input.SetRect(left, 7, right, 10)
 		output.SetRect(left, 10, right, 13)
 		status.SetRect(left, 13, right, 16)
+
 		inFmt := "?"
 		if strings.TrimSpace(input.Text) != "" {
-			if f, err := mailbox.DetectInput(strings.TrimSpace(input.Text)); err == nil { inFmt = string(f) }
+			if f, err := mailbox.DetectInput(strings.TrimSpace(input.Text)); err == nil {
+				inFmt = string(f)
+			}
 		}
 		outFmt := "?"
 		if strings.TrimSpace(output.Text) != "" {
-			if f, err := mailbox.DetectOutput(strings.TrimSpace(output.Text)); err == nil { outFmt = string(f) }
+			if f, err := mailbox.DetectOutput(strings.TrimSpace(output.Text)); err == nil {
+				outFmt = string(f)
+			}
 		}
 		status.Text = fmt.Sprintf("Input: %s    Output: %s", inFmt, outFmt)
+
 		if focus == 0 {
 			input.TitleStyle.Fg = ui.ColorCyan
 			output.TitleStyle.Fg = ui.ColorWhite
@@ -70,10 +82,14 @@ Tab: switch field   Enter: convert   Esc/q: quit"
 		ui.Clear()
 		ui.Render(info, input, output, status)
 	}
+
 	active := func() *widgets.Input {
-		if focus == 0 { return input }
+		if focus == 0 {
+			return input
+		}
 		return output
 	}
+
 	redraw()
 	for {
 		e := <-events
@@ -84,7 +100,10 @@ Tab: switch field   Enter: convert   Esc/q: quit"
 			focus = 1 - focus
 		case "<Enter>":
 			if strings.TrimSpace(input.Text) != "" && strings.TrimSpace(output.Text) != "" {
-				return Selection{Input: strings.TrimSpace(input.Text), Output: strings.TrimSpace(output.Text)}, nil
+				return Selection{
+					Input:  strings.TrimSpace(input.Text),
+					Output: strings.TrimSpace(output.Text),
+				}, nil
 			}
 		case "<Backspace>":
 			active().Backspace()
@@ -93,7 +112,9 @@ Tab: switch field   Enter: convert   Esc/q: quit"
 		case "<Right>":
 			active().MoveCursorRight()
 		default:
-			if len([]rune(e.ID)) == 1 { active().InsertRune([]rune(e.ID)[0]) }
+			if len([]rune(e.ID)) == 1 {
+				active().InsertRune([]rune(e.ID)[0])
+			}
 		}
 		redraw()
 	}
