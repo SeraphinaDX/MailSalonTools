@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.13
 
 require (
-	github.com/grokify/outlook-pst-go v0.1.2
+	github.com/grokify/outlook-pst-go v0.1.4
 	github.com/metaspartan/gotui/v5 v5.0.3
 )
 
@@ -23,4 +23,4 @@ require (
 	golang.org/x/text v0.32.0 // indirect
 )
 
-replace github.com/grokify/outlook-pst-go => github.com/SeraphinaDX/outlook-pst-go v0.1.2
+replace github.com/grokify/outlook-pst-go => github.com/SeraphinaDX/outlook-pst-go v0.1.4
