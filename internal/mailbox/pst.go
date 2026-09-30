@@ -70,7 +70,11 @@ func (r *pstReader) Next() (*model.Message, error) {
 	m.Subject, _ = pm.Subject()
 	m.MessageID, _ = pm.InternetMessageID()
 	m.TextBody, _ = pm.Body()
-	m.HTMLBody, _ = pm.HTMLBody()
+	if html, htmlErr := pm.HTMLBody(); htmlErr == nil {
+		m.HTMLBody = html
+	} else if !strings.Contains(htmlErr.Error(), "property not found") {
+		return nil, fmt.Errorf("read PST HTML body: %w", htmlErr)
+	}
 	m.From.Name, _ = pm.SenderName()
 	m.From.Email, _ = pm.SenderEmail()
 	if t, err := pm.SubmitTime(); err == nil {
