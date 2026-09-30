@@ -6,31 +6,18 @@ import (
 )
 
 func TestParseRFC822Attachment(t *testing.T) {
-	raw := []byte("From: Britney <britney@example.com>
-" +
-		"To: Friend <friend@example.com>
-" +
-		"Subject: Test
-MIME-Version: 1.0
-" +
-		"Content-Type: multipart/mixed; boundary=x
+	raw := []byte("From: Britney <britney@example.com>\r\n" +
+		"To: Friend <friend@example.com>\r\n" +
+		"Subject: Test\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: multipart/mixed; boundary=x\r\n\r\n" +
+		"--x\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nhello\r\n" +
+		"--x\r\nContent-Type: text/plain; name=note.txt\r\n" +
+		"Content-Disposition: attachment; filename=note.txt\r\n" +
+		"Content-Transfer-Encoding: base64\r\n\r\n" +
+		"aGVsbG8gYXR0YWNobWVudA==\r\n" +
+		"--x--\r\n")
 
-" +
-		"--x
-Content-Type: text/plain; charset=utf-8
-
-hello
-" +
-		"--x
-Content-Type: text/plain; name=note.txt
-" +
-		"Content-Disposition: attachment; filename=note.txt
-" +
-		"Content-Transfer-Encoding: base64
-
-aGVsbG8gYXR0YWNobWVudA==
---x--
-")
 	msg, err := ParseRFC822(raw)
 	if err != nil {
 		t.Fatal(err)
@@ -48,13 +35,19 @@ aGVsbG8gYXR0YWNobWVudA==
 
 func TestBuildRFC822Structured(t *testing.T) {
 	msg := &Message{
-		Subject: "Round trip",
-		From: Address{Name: "Britney", Email: "britney@example.com"},
-		To: []Address{{Name: "Friend", Email: "friend@example.com"}},
-		TextBody: "hello", HTMLBody: "<p>hello</p>",
-		Attachments: []Attachment{{Filename: "note.txt", MIMEType: "text/plain", Data: []byte("attachment")}},
+		Subject:  "Round trip",
+		From:     Address{Name: "Britney", Email: "britney@example.com"},
+		To:       []Address{{Name: "Friend", Email: "friend@example.com"}},
+		TextBody: "hello",
+		HTMLBody: "<p>hello</p>",
+		Attachments: []Attachment{{
+			Filename: "note.txt",
+			MIMEType: "text/plain",
+			Data:     []byte("attachment"),
+		}},
 		Parsed: true,
 	}
+
 	raw, err := BuildRFC822(msg)
 	if err != nil {
 		t.Fatal(err)
