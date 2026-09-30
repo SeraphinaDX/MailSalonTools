@@ -13,10 +13,10 @@ import (
 )
 
 type mboxReader struct {
-	file *os.File
-	br *bufio.Reader
+	file  *os.File
+	br    *bufio.Reader
 	ready bool
-	eof bool
+	eof   bool
 }
 
 func newMboxReader(path string) (*mboxReader, error) {
@@ -31,10 +31,10 @@ func (r *mboxReader) Next() (*model.Message, error) {
 	if r.eof {
 		return nil, io.EOF
 	}
+
 	if !r.ready {
 		for {
-			line, err := r.br.ReadString('
-')
+			line, err := r.br.ReadString('\n')
 			if strings.HasPrefix(line, "From ") {
 				r.ready = true
 				break
@@ -45,10 +45,10 @@ func (r *mboxReader) Next() (*model.Message, error) {
 			}
 		}
 	}
+
 	var b bytes.Buffer
 	for {
-		line, err := r.br.ReadString('
-')
+		line, err := r.br.ReadString('\n')
 		if strings.HasPrefix(line, "From ") && b.Len() > 0 {
 			r.ready = true
 			return &model.Message{Raw: append([]byte(nil), b.Bytes()...)}, nil
@@ -72,7 +72,9 @@ func (r *mboxReader) Next() (*model.Message, error) {
 
 func (r *mboxReader) Close() error { return r.file.Close() }
 
-type mboxWriter struct{ file *os.File }
+type mboxWriter struct {
+	file *os.File
+}
 
 func newMboxWriter(path string, overwrite bool) (*mboxWriter, error) {
 	flags := os.O_CREATE | os.O_WRONLY
@@ -96,12 +98,11 @@ func (w *mboxWriter) Write(msg *model.Message) error {
 	if err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(w.file, "From MAILER-DAEMON %s
-", time.Now().Format(time.ANSIC)); err != nil {
+	if _, err := fmt.Fprintf(w.file, "From MAILER-DAEMON %s\n", time.Now().Format(time.ANSIC)); err != nil {
 		return err
 	}
-	for _, line := range bytes.SplitAfter(raw, []byte("
-")) {
+
+	for _, line := range bytes.SplitAfter(raw, []byte("\n")) {
 		if bytes.HasPrefix(line, []byte("From ")) {
 			if _, err := w.file.Write([]byte(">")); err != nil {
 				return err
@@ -111,15 +112,12 @@ func (w *mboxWriter) Write(msg *model.Message) error {
 			return err
 		}
 	}
-	if len(raw) == 0 || raw[len(raw)-1] != '
-' {
-		if _, err := w.file.Write([]byte("
-")); err != nil {
+	if len(raw) == 0 || raw[len(raw)-1] != '\n' {
+		if _, err := w.file.Write([]byte("\n")); err != nil {
 			return err
 		}
 	}
-	_, err = w.file.Write([]byte("
-"))
+	_, err = w.file.Write([]byte("\n"))
 	return err
 }
 
