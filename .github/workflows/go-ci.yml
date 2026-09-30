@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -18,19 +18,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
-      - name: Format branch
-        if: github.event_name == 'push'
-        run: |
-          go mod tidy
-          gofmt -w .
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "style: gofmt"
-            git push origin HEAD:${GITHUB_REF_NAME}
-          fi
-      - name: Format check
+      - name: Format
         run: test -z "$(gofmt -l .)"
       - name: Vet
         run: go vet ./...
