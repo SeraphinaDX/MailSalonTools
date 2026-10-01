@@ -115,7 +115,7 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 		}
 	}
 	rawBody, err := io.ReadAll(r)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("read MIME body: %w", err)
 	}
 	body := decodeTransferBytes(rawBody, h.Get("Content-Transfer-Encoding"))
