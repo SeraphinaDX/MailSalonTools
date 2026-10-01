@@ -46,7 +46,6 @@ func TestMboxToPSTMalformedQuotedPrintable(t *testing.T) {
 	}
 }
 
-
 func TestMboxToPSTTruncatedMultipart(t *testing.T) {
 	temp := t.TempDir()
 	mboxPath := filepath.Join(temp, "truncated.mbox")
