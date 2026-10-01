@@ -61,7 +61,6 @@ func TestBuildRFC822Structured(t *testing.T) {
 	}
 }
 
-
 func TestParseRFC822MalformedQuotedPrintable(t *testing.T) {
 	raw := []byte("From: sender@example.com\r\n" +
 		"To: receiver@example.com\r\n" +
