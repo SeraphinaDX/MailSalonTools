@@ -179,6 +179,9 @@ func decodeTransferBytes(raw []byte, encoding string) []byte {
 		return append([]byte(nil), raw...)
 
 	case "quoted-printable":
+		if quotedPrintableMalformed(raw) {
+			return decodeQuotedPrintableLenient(raw)
+		}
 		decoded, err := io.ReadAll(quotedprintable.NewReader(bytes.NewReader(raw)))
 		if err == nil {
 			return decoded
@@ -188,6 +191,38 @@ func decodeTransferBytes(raw []byte, encoding string) []byte {
 	default:
 		return append([]byte(nil), raw...)
 	}
+}
+
+func quotedPrintableMalformed(raw []byte) bool {
+	for i := 0; i < len(raw); i++ {
+		if raw[i] != '=' {
+			continue
+		}
+		if i+1 >= len(raw) {
+			return true
+		}
+		if raw[i+1] == '\n' {
+			i++
+			continue
+		}
+		if raw[i+1] == '\r' {
+			if i+2 < len(raw) && raw[i+2] == '\n' {
+				i += 2
+				continue
+			}
+			return true
+		}
+		if i+2 >= len(raw) {
+			return true
+		}
+		_, okHi := fromHex(raw[i+1])
+		_, okLo := fromHex(raw[i+2])
+		if !okHi || !okLo {
+			return true
+		}
+		i += 2
+	}
+	return false
 }
 
 // decodeQuotedPrintableLenient recovers common malformed archival mail while
