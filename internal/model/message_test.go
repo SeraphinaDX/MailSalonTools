@@ -101,3 +101,25 @@ func TestParseRFC822DanglingQuotedPrintableAtEOF(t *testing.T) {
 		t.Fatalf("text body = %q", msg.TextBody)
 	}
 }
+
+func TestParseRFC822TruncatedMultipartEOF(t *testing.T) {
+	raw := []byte("From: sender@example.com\r\n" +
+		"To: receiver@example.com\r\n" +
+		"Subject: Truncated multipart\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: multipart/mixed; boundary=broken\r\n\r\n" +
+		"--broken\r\n" +
+		"Content-Type: text/plain; charset=utf-8\r\n\r\n" +
+		"body survives without closing boundary")
+
+	msg, err := ParseRFC822(raw)
+	if err != nil {
+		t.Fatalf("ParseRFC822 rejected truncated multipart: %v", err)
+	}
+	if msg.TextBody != "body survives without closing boundary" {
+		t.Fatalf("text body = %q", msg.TextBody)
+	}
+	if !bytes.Equal(msg.Raw, raw) {
+		t.Fatal("raw RFC822 message was not preserved")
+	}
+}

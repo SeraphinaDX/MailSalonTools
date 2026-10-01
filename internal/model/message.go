@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -100,10 +101,10 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 		mr := multipart.NewReader(r, boundary)
 		for {
 			part, err := mr.NextRawPart()
-			if err == io.EOF {
-				return nil
-			}
 			if err != nil {
+				if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+					return nil
+				}
 				return fmt.Errorf("read MIME part: %w", err)
 			}
 			if err := parseEntity(part, part.Header, out); err != nil {
@@ -114,7 +115,7 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 		}
 	}
 	rawBody, err := io.ReadAll(r)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return fmt.Errorf("read MIME body: %w", err)
 	}
 	body := decodeTransferBytes(rawBody, h.Get("Content-Transfer-Encoding"))
