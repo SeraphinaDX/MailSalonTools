@@ -2,8 +2,8 @@ package model
 
 import (
 	"bytes"
-	"errors"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
