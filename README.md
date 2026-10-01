@@ -15,7 +15,7 @@ The current development version is **0.1.0-dev**.
 | mbox | yes | yes |
 | PST | yes | yes |
 
-PST support uses the MailSalon-maintained SeraphinaDX/outlook-pst-go fork at v0.1.8, including the folder, table, recipient, attachment, Unicode, and ANSI round-trip writer fixes.
+PST support uses the MailSalon-maintained SeraphinaDX/outlook-pst-go fork at v0.1.9, including the folder, table, recipient, attachment, Unicode, and ANSI round-trip writer fixes.
 
 ## Usage
 
