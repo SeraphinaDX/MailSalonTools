@@ -16,7 +16,7 @@ func TestPSTWriterContinuesAfterBatchReopen(t *testing.T) {
 		t.Fatalf("newPSTWriter: %v", err)
 	}
 
-	const count = 230
+	const count = 700
 	for i := 0; i < count; i++ {
 		msg := &model.Message{
 			Subject:   fmt.Sprintf("batch message %03d", i),
