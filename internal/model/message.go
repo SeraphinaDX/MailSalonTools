@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"errors"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -100,10 +101,10 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 		mr := multipart.NewReader(r, boundary)
 		for {
 			part, err := mr.NextRawPart()
-			if err == io.EOF {
-				return nil
-			}
 			if err != nil {
+				if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+					return nil
+				}
 				return fmt.Errorf("read MIME part: %w", err)
 			}
 			if err := parseEntity(part, part.Header, out); err != nil {
