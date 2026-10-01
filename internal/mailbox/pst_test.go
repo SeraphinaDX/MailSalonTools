@@ -59,7 +59,6 @@ func TestPSTWriterContinuesAfterBatchReopen(t *testing.T) {
 	}
 }
 
-
 func TestPSTWriterVeryLargeAttachment(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "xxblock-attachment.pst")
 	w, err := newPSTWriter(path, true)
