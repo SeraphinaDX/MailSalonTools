@@ -102,7 +102,6 @@ func TestParseRFC822DanglingQuotedPrintableAtEOF(t *testing.T) {
 	}
 }
 
-
 func TestParseRFC822TruncatedMultipartEOF(t *testing.T) {
 	raw := []byte("From: sender@example.com\r\n" +
 		"To: receiver@example.com\r\n" +
