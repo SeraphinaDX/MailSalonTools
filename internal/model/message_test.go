@@ -77,7 +77,7 @@ func TestParseRFC822MalformedQuotedPrintable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseRFC822 rejected malformed quoted-printable: %v", err)
 	}
-	want := "valid text, invalid=ZZ and dangling"
+	want := "valid text, invalid=ZZ and dangling="
 	if msg.TextBody != want {
 		t.Fatalf("text body = %q, want %q", msg.TextBody, want)
 	}
