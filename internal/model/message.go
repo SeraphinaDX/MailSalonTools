@@ -99,7 +99,7 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 		}
 		mr := multipart.NewReader(r, boundary)
 		for {
-			part, err := mr.NextPart()
+			part, err := mr.NextRawPart()
 			if err == io.EOF {
 				return nil
 			}
@@ -113,10 +113,11 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 			_ = part.Close()
 		}
 	}
-	body, err := io.ReadAll(decodeTransfer(r, h.Get("Content-Transfer-Encoding")))
+	rawBody, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("read MIME body: %w", err)
 	}
+	body := decodeTransferBytes(rawBody, h.Get("Content-Transfer-Encoding"))
 	disposition, dispParams, _ := mime.ParseMediaType(h.Get("Content-Disposition"))
 	filename := dispParams["filename"]
 	if filename == "" {
@@ -153,14 +154,88 @@ func parseEntity(r io.Reader, h textproto.MIMEHeader, out *Message) error {
 	return nil
 }
 
-func decodeTransfer(r io.Reader, encoding string) io.Reader {
+func decodeTransferBytes(raw []byte, encoding string) []byte {
 	switch strings.ToLower(strings.TrimSpace(encoding)) {
 	case "base64":
-		return base64.NewDecoder(base64.StdEncoding, r)
+		decoded, err := io.ReadAll(base64.NewDecoder(base64.StdEncoding, bytes.NewReader(raw)))
+		if err == nil {
+			return decoded
+		}
+		// Broken archival mail occasionally has missing padding or stray
+		// whitespace. Try a compact/raw decode before falling back to the
+		// original bytes so one malformed MIME part does not abort a mailbox.
+		compact := make([]byte, 0, len(raw))
+		for _, b := range raw {
+			switch b {
+			case ' ', '\t', '\r', '\n':
+				continue
+			default:
+				compact = append(compact, b)
+			}
+		}
+		if decoded, err := base64.RawStdEncoding.DecodeString(strings.TrimRight(string(compact), "=")); err == nil {
+			return decoded
+		}
+		return append([]byte(nil), raw...)
+
 	case "quoted-printable":
-		return quotedprintable.NewReader(r)
+		decoded, err := io.ReadAll(quotedprintable.NewReader(bytes.NewReader(raw)))
+		if err == nil {
+			return decoded
+		}
+		return decodeQuotedPrintableLenient(raw)
+
 	default:
-		return r
+		return append([]byte(nil), raw...)
+	}
+}
+
+// decodeQuotedPrintableLenient recovers common malformed archival mail while
+// preserving undecodable bytes. Valid hex escapes and soft line breaks are
+// decoded normally; a stray or dangling '=' is kept literally.
+func decodeQuotedPrintableLenient(raw []byte) []byte {
+	out := make([]byte, 0, len(raw))
+	for i := 0; i < len(raw); {
+		if raw[i] != '=' {
+			out = append(out, raw[i])
+			i++
+			continue
+		}
+
+		if i+1 < len(raw) && raw[i+1] == '\n' {
+			i += 2
+			continue
+		}
+		if i+2 < len(raw) && raw[i+1] == '\r' && raw[i+2] == '\n' {
+			i += 3
+			continue
+		}
+		if i+2 < len(raw) {
+			hi, okHi := fromHex(raw[i+1])
+			lo, okLo := fromHex(raw[i+2])
+			if okHi && okLo {
+				out = append(out, hi<<4|lo)
+				i += 3
+				continue
+			}
+		}
+
+		out = append(out, '=')
+		i++
+	}
+	return out
+}
+
+func fromHex(b byte) (byte, bool) {
+	switch {
+	case b >= '0' && b <= '9':
+		return b - '0', true
+	case b >= 'a' && b <= 'f':
+		return b - 'a' + 10, true
+	case b >= 'A' && b <= 'F':
+		return b - 'A' + 10, true
+	default:
+		return 0, false
 	}
 }
 
