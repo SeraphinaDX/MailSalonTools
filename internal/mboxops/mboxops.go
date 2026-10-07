@@ -47,6 +47,13 @@ func Combine(inputs []string, output string, overwrite bool, progress ProgressFu
 		if inAbs == outAbs {
 			return CombineResult{}, fmt.Errorf("output must not be one of the input mbox files: %s", input)
 		}
+		info, err := os.Stat(input)
+		if err != nil {
+			return CombineResult{}, fmt.Errorf("stat input mbox %s: %w", input, err)
+		}
+		if !info.Mode().IsRegular() {
+			return CombineResult{}, fmt.Errorf("input mbox is not a regular file: %s", input)
+		}
 	}
 
 	writer, err := mailbox.OpenWriter(mailbox.FormatMbox, output, overwrite)
