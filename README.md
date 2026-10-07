@@ -39,6 +39,32 @@ MailSalonTools -input mail.mbox -output archive.pst -overwrite
 
 Supported format names are eml, maildir, mbox, and pst.
 
+### Combine mbox files
+
+Combine two or more mbox files into one output archive. Input files are positional so shell globs work naturally:
+
+~~~sh
+MailSalonTools -combine-mbox -output combined.mbox january.mbox february.mbox march.mbox
+~~~
+
+You can also supply the first input with `-input`:
+
+~~~sh
+MailSalonTools -combine-mbox -input older.mbox -output combined.mbox newer.mbox
+~~~
+
+The operation streams messages instead of loading complete mailboxes into memory. Existing outputs are protected unless `-overwrite` is supplied.
+
+### Split mbox by year
+
+Split one mbox into separate files according to each message's `Date:` header:
+
+~~~sh
+MailSalonTools -split-by-year -input archive.mbox -output ./mail-by-year
+~~~
+
+Outputs are named `YYYY.mbox`, for example `2021.mbox` and `2022.mbox`. Messages with a missing or unparseable date are written to `unknown.mbox`. Existing generated year files are protected unless `-overwrite` is supplied.
+
 Run without arguments for the small gotui wizard:
 
 ~~~sh
