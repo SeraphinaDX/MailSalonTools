@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/SeraphinaDX/MailSalonTools/internal/convert"
+	"github.com/SeraphinaDX/MailSalonTools/internal/duplicates"
 	"github.com/SeraphinaDX/MailSalonTools/internal/mailbox"
 	"github.com/SeraphinaDX/MailSalonTools/internal/mboxops"
 	"github.com/SeraphinaDX/MailSalonTools/internal/tui"
@@ -34,6 +35,8 @@ func main() {
 	overwrite := fs.Bool("overwrite", false, "replace an existing output")
 	combineMbox := fs.Bool("combine-mbox", false, "combine positional mbox files into -output")
 	splitByYear := fs.Bool("split-by-year", false, "split -input mbox into YYYY.mbox files under -output")
+	findDuplicates := fs.Bool("find-duplicates", false, "scan for duplicate messages without writing output")
+	removeDuplicates := fs.Bool("remove-duplicates", false, "write a cleaned mailbox to -output (same format by default)")
 	showVersion := fs.Bool("version", false, "show version and exit")
 	_ = fs.Parse(os.Args[1:])
 
@@ -42,8 +45,14 @@ func main() {
 		return
 	}
 
-	if *combineMbox && *splitByYear {
-		fatal(fmt.Errorf("-combine-mbox and -split-by-year cannot be used together"))
+	operations := 0
+	for _, enabled := range []bool{*combineMbox, *splitByYear, *findDuplicates, *removeDuplicates} {
+		if enabled {
+			operations++
+		}
+	}
+	if operations > 1 {
+		fatal(fmt.Errorf("choose only one of -combine-mbox, -split-by-year, -find-duplicates, and -remove-duplicates"))
 	}
 	if *combineMbox {
 		inputs := append([]string(nil), fs.Args()...)
@@ -77,6 +86,21 @@ func main() {
 		if err != nil {
 			fatal(err)
 		}
+	}
+	if *findDuplicates || *removeDuplicates {
+		if *findDuplicates && (*overwrite || *outputFormat != "") {
+			fatal(fmt.Errorf("-find-duplicates does not accept -overwrite or -output-format"))
+		}
+		result, err := duplicates.Run(duplicates.Options{Input: opts.Input, Output: opts.Output, InputFormat: opts.InputFormat, OutputFormat: opts.OutputFormat, Overwrite: opts.Overwrite, ScanOnly: *findDuplicates})
+		if err != nil {
+			fatal(err)
+		}
+		action := "found"
+		if *removeDuplicates {
+			action = "removed from output"
+		}
+		fmt.Printf("✓ Finished: %d message(s) scanned, %d unique, %d duplicate(s) %s.\n", result.Messages, result.Unique, result.Duplicates, action)
+		return
 	}
 	run(opts)
 }
